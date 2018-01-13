@@ -7,7 +7,6 @@
 
 #include <Foundation/Foundation.h>
 
-#import "ViewController.h"
 #import <OpenGLES/ES2/glext.h>
 #import <stdint.h>
 

@@ -22,6 +22,8 @@ type _GLKViewT;
   "setPreferredFramesPerSecond";
 
 external getView : gameViewControllerT => _GLKViewT = "getGLKView";
+external getWidth : gameViewControllerT => int = "getWidth";
+external getHeight : gameViewControllerT => int = "getHeight";
 
 [@noalloc] external setDrawableDepthFormat : (_GLKViewT, _GLKViewDrawableDepthFormatT) => unit =
   "setDrawableDepthFormat";
@@ -34,3 +36,8 @@ external getView : gameViewControllerT => _GLKViewT = "getGLKView";
 external loadImage : (~filename: string) => option('a) = "loadImage";
 external loadFile : (~filename: string) => option(string) = "loadFile";
 external getTimeMs : unit => float = "getTimeMs";
+
+external loadData : (~context: contextT, ~key: string) => option(bytes) = "loadData";
+external saveData : (~context: contextT, ~key: string, ~value: bytes) => unit = "saveData";
+
+/* external startHotReloading : (~context: contextT, ~host: string, ~baseFile: string) => unit = "startHotReloading"; */

@@ -7,7 +7,7 @@
 
 #include <Foundation/Foundation.h>
 
-#import "ViewController.h"
+#import "Reprocessing.h"
 #import <OpenGLES/ES2/glext.h>
 #import <stdint.h>
 
@@ -39,7 +39,7 @@ static value unboxed(GLuint i) {
 // CAMLprim value setProgram(value s, value program) {
 //   CAMLparam2(s, program);
 //   id s2 = (id)(void *)Field(s, 0);
-//   GameViewController *game = (GameViewController *)s2;
+//   ReprocessingViewController *game = (ReprocessingViewController *)s2;
 //   game.program = (GLuint)Int_val(program);
 //   CAMLreturn(Val_int(0));
 // }
@@ -47,7 +47,7 @@ static value unboxed(GLuint i) {
 // CAMLprim value setUmvp(value s, value umvp) {
 //   CAMLparam2(s, umvp);
 //   id s2 = (id)(void *)Field(s, 0);
-//   GameViewController *game = (GameViewController *)s2;
+//   ReprocessingViewController *game = (ReprocessingViewController *)s2;
 //   game.umvp = (GLint)Int_val(umvp);
 //   CAMLreturn(Val_int(0));
 // }
@@ -55,7 +55,7 @@ static value unboxed(GLuint i) {
 // CAMLprim value setVertexArray(value s, value vertexArray) {
 //   CAMLparam2(s, vertexArray);
 //   id s2 = (id)(void *)Field(s, 0);
-//   GameViewController *game = (GameViewController *)s2;
+//   ReprocessingViewController *game = (ReprocessingViewController *)s2;
 //   game.vertexArray = (GLuint)Int_val(vertexArray);
 //   CAMLreturn(Val_int(0));
 // }
@@ -63,27 +63,27 @@ static value unboxed(GLuint i) {
 // CAMLprim value setVertexBuffer(value s, value vertexBuffer) {
 //   CAMLparam2(s, vertexBuffer);
 //   id s2 = (id)(void *)Field(s, 0);
-//   GameViewController *game = (GameViewController *)s2;
+//   ReprocessingViewController *game = (ReprocessingViewController *)s2;
 //   game.vertexBuffer = (GLuint)Int_val(vertexBuffer);
 //   CAMLreturn(Val_int(0));
 // }
 
 /** These are unique to ios */
 
-CAMLprim getTimeMs() {
+CAMLprim value getTimeMs() {
   CAMLparam0();
   CAMLreturn(caml_copy_double([[NSDate date] timeIntervalSince1970] * 1000.0));
 }
 
 void setContext(value s, value c) {
   id s2 = (id)(void *)Field(s, 0);
-  GameViewController *game = (GameViewController *)s2;
+  ReprocessingViewController *game = (ReprocessingViewController *)s2;
   game.context = (EAGLContext *)Field(c, 0);
 }
 
 void setPreferredFramesPerSecond(value s, value f) {
   id s2 = (id)(void *)Field(s, 0);
-  GameViewController *game = (GameViewController *)s2;
+  ReprocessingViewController *game = (ReprocessingViewController *)s2;
   game.preferredFramesPerSecond = Int_val(f);
 }
 
@@ -108,12 +108,26 @@ CAMLprim value newEAGLContext(value num) {
 CAMLprim value getGLKView(value s) {
   CAMLparam1(s);
   id s2 = (id)(void *)Field(s, 0);
-  GameViewController *game = (GameViewController *)s2;
+  ReprocessingViewController *game = (ReprocessingViewController *)s2;
   GLKView *v = (GLKView *)game.view;
   CAMLreturn(oreturn(v));
 }
 
-void reasonglMain(GameViewController *viewController) {
+CAMLprim value getWidth(value s) {
+  CAMLparam1(s);
+  id s2 = (id)(void *)Field(s, 0);
+  ReprocessingViewController *game = (ReprocessingViewController *)s2;
+  CAMLreturn(Val_int(game.view.bounds.size.width));
+}
+
+CAMLprim value getHeight(value s) {
+  CAMLparam1(s);
+  id s2 = (id)(void *)Field(s, 0);
+  ReprocessingViewController *game = (ReprocessingViewController *)s2;
+  CAMLreturn(Val_int(game.view.bounds.size.height));
+}
+
+void reasonglMain(ReprocessingViewController *viewController) {
   CAMLparam0();
   CAMLlocal1(ocamlViewController);
   value *reasongl_main = caml_named_value("reasonglMain");
@@ -123,7 +137,7 @@ void reasonglMain(GameViewController *viewController) {
   CAMLreturn0;
 }
 
-void reasonglUpdate(GameViewController *s) {
+void reasonglUpdate(ReprocessingViewController *s) {
   static dispatch_once_t onceToken;
   static value *closure_f;
   dispatch_once(&onceToken, ^{
@@ -288,3 +302,55 @@ CAMLprim value loadImage(value filename) {
     CAMLreturn(Val_some(record_image_data));
   }
 }
+
+// CAMLprim void saveDataToTmpFile(value context, value extension, value data) {
+//   CAMLparam3(context, extension, data);
+
+//   NSData* nsData = [NSData dataWithBytes:String_val(data) length:caml_string_length(data)];
+//   NSString* keyString = [NSString stringWithUTF8String:String_val(key)];
+//   [[NSUserDefaults standardUserDefaults] setObject:nsData forKey:keyString];
+
+//   CAMLreturn0;
+// }
+
+
+CAMLprim void saveData(value context, value key, value data) {
+  CAMLparam3(context, key, data);
+
+  NSData* nsData = [NSData dataWithBytes:String_val(data) length:caml_string_length(data)];
+  NSString* keyString = [NSString stringWithUTF8String:String_val(key)];
+  [[NSUserDefaults standardUserDefaults] setObject:nsData forKey:keyString];
+
+  CAMLreturn0;
+}
+
+CAMLprim value loadData(value ocamlWindow, value key) {
+  CAMLparam2(ocamlWindow, key);
+  CAMLlocal1(ml_data);
+
+  NSString* keyString = [NSString stringWithUTF8String:String_val(key)];
+  NSData* nsData = [[NSUserDefaults standardUserDefaults] dataForKey:keyString];
+
+  if (!nsData) {
+    CAMLreturn(Val_none);
+  } else {
+    int len = nsData.length;
+    // char buf[len];
+    // (*g_env)->GetByteArrayRegion(g_env, array, 0, len, (jbyte*)buf);
+
+    // from https://www.linux-nantes.org/~fmonnier/OCaml/ocaml-wrapping-c.html
+    ml_data = caml_alloc_string(len);
+    memcpy( String_val(ml_data), nsData.bytes, len );
+
+    CAMLreturn(Val_some(ml_data));
+  }
+}
+
+// CAMLprim void startHotReloading(value context, value host, value baseFile) {
+//   CAMLparam3(context, host, baseFile);
+
+//   NSString* hostString = [NSString stringWithUTF8String:String_val(host)];
+//   NSString* baseFileString = [NSString stringWithUTF8String:String_val(baseFile)];
+
+//   CAMLreturn0;
+// }

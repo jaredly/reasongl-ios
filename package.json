@@ -1,0 +1,21 @@
+{
+  "author": {
+    "name": "bsansouci & schmavery & jaredly"
+  },
+  "bugs": {
+    "url": "https://github.com/jaredly/reasongl-ios/issues"
+  },
+  "bundleDependencies": false,
+  "dependencies": {
+    "@jaredly/reasongl-interface": "1.0.1"
+  },
+  "deprecated": false,
+  "description": "Reason bindings to OpenGL for iOS native",
+  "homepage": "https://github.com/jaredly/reasongl-ios#readme",
+  "name": "@jaredly/reasongl-ios",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jaredly/reasongl-ios.git"
+  },
+  "version": "1.0.7"
+}

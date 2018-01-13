@@ -6,11 +6,7 @@ let module Gl
   include Tgls;
 
   let target = "native-ios";
-  module type FileT = {type t; let readFile: (~context: contextT, ~filename: string, ~cb: string => unit) => unit;
-    let saveUserData: (~context: contextT, ~key: string, ~value: 'a) => bool;
-    let loadUserData: (~context: contextT, ~key: string) => option('a);
-  };
-  module File: FileT = {
+  module File = {
     type t;
     let readFile = (~context, ~filename, ~cb) => {
       switch (loadFile(filename)) {
@@ -18,33 +14,38 @@ let module Gl
       | Some(text) => cb(text)
       }
     };
-    let loadUserData = (~context, ~key) => None;
-    let saveUserData = (~context, ~key, ~value) => false;
+    let loadUserData = (~context, ~key) => {
+      try {
+      switch(Bindings.loadData(~context, ~key)) {
+        | None => None
+        | Some(bytes) => {
+          Some(Marshal.from_bytes(bytes, 0))
+        }
+      }
+      } {
+        | _ => None
+      }
+    };
+    let saveUserData = (~context, ~key, ~value) => {
+      let text = Marshal.to_bytes(value, []);
+      Bindings.saveData(~context, ~key, ~value=text);
+      true
+    };
   };
 
-  module type WindowT = {
-    type t;
-    let getWidth: t => int;
-    let getHeight: t => int;
-    let getPixelWidth: t => int;
-    let getPixelHeight: t => int;
-    let getPixelScale: t => float;
-    let init: (~title: string=?, ~argv: array(string), (t) => unit) => unit;
-    let setWindowSize: (~window: t, ~width: int, ~height: int) => unit;
-    let getContext: t => contextT;
-  };
-
-  module Window: WindowT = {
+  module Window = {
     type t = {viewController: gameViewControllerT, context: contextT};
-    let getWidth = (window) => 375; /** TODO make general */
-    let getHeight = (window) => 667;
+    let getWidth = (window) => Bindings.getWidth(window.viewController);
+    let getHeight = (window) => Bindings.getHeight(window.viewController);
     /** TODO these are probably wrong */
     let getPixelWidth = (window) => getWidth(window);
     let getPixelHeight = (window) => getHeight(window);
     let getPixelScale = (window) => 1.;
+    let getMaxWidth = getWidth;
+    let getMaxHeight = getHeight;
 
     let setWindowSize = (~window, ~width, ~height) => {
-      failwith("Unable to set window size");
+      /* failwith("Unable to set window size"); */
       /* umm this can't happen.
       one thing we could do is have an "intrinsic size" and a "real size",
       and this makes it so we scale whatever they're drawing to the actual
@@ -70,6 +71,12 @@ let module Gl
         };
       })
     };
+  };
+
+  let module Audio = {
+    type t;
+    let loadSound = (window, path, callback) => failwith("Sound not supported on ios");
+    let playSound = (window, sound, ~volume, ~loop) => failwith("Sound not supported on ios");
   };
 
   let module Events: RGLEvents.t = {
