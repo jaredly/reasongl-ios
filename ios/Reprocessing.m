@@ -2,10 +2,11 @@
 #import <OpenGLES/ES2/glext.h>
 
 extern void reasonglMain(ReprocessingViewController *this);
+extern void reasonglWindowResize();
 extern void reasonglUpdate(ReprocessingViewController *this);
-extern void reasonglTouchPress(double x, double y);
-extern void reasonglTouchRelease(double x, double y);
-extern void reasonglTouchDrag(double x, double y);
+extern void reasonglTouchPress(double* touchPoints, int touchCount);
+extern void reasonglTouchRelease(double* touchPoints, int touchCount);
+extern void reasonglTouchDrag(double* touchPoints, int touchCount);
 
 @interface ReprocessingViewController ()
 
@@ -18,6 +19,8 @@ extern void reasonglTouchDrag(double x, double y);
 - (void)viewDidLoad
 {
 	[super viewDidLoad];
+	self.view.multipleTouchEnabled = YES;
+	self.viewSize = self.view.bounds.size;
 	reasonglMain(self);
 }
 
@@ -57,33 +60,79 @@ extern void reasonglTouchDrag(double x, double y);
 
 #pragma mark - GLKView and GLKViewController delegate methods
 
+- (void)viewWillTransitionToSize:(CGSize)size
+       withTransitionCoordinator:(id<UIViewControllerTransitionCoordinator>)coordinator
+{
+	self.viewSize = size;
+	reasonglWindowResize();
+}
+
 - (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event
 {
 	[super touchesBegan:touches withEvent:event];
-	UITouch* touchEvent = [touches anyObject];
-	CGPoint locationInView = [touchEvent locationInView:self.view];
-	reasonglTouchPress(locationInView.x, locationInView.y);
+	double touchPoints[[touches count] * 3];
+	int i = 0;
+	for (UITouch* touchEvent in touches) {
+		CGPoint locationInView = [touchEvent locationInView:self.view];
+		touchPoints[i * 3 + 0] = [touchEvent hash];
+		touchPoints[i * 3 + 1] = locationInView.x;
+		touchPoints[i * 3 + 2] = locationInView.y;
+		i++;
+	}
+	reasonglTouchPress(touchPoints, (int)[touches count]);
+	// UITouch* touchEvent = [touches anyObject];
+	// reasonglTouchPress(locationInView.x, locationInView.y);
 }
 
 - (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event
 {
 	[super touchesMoved:touches withEvent:event];
-	UITouch* touchEvent = [touches anyObject];
-	CGPoint locationInView = [touchEvent locationInView:self.view];
-	reasonglTouchDrag(locationInView.x, locationInView.y);
+	// UITouch* touchEvent = [touches anyObject];
+	// CGPoint locationInView = [touchEvent locationInView:self.view];
+	// reasonglTouchDrag(locationInView.x, locationInView.y);
+	double touchPoints[[touches count] * 3];
+	int i = 0;
+	for (UITouch* touchEvent in touches) {
+		CGPoint locationInView = [touchEvent locationInView:self.view];
+		touchPoints[i * 3 + 0] = [touchEvent hash];
+		touchPoints[i * 3 + 1] = locationInView.x;
+		touchPoints[i * 3 + 2] = locationInView.y;
+		i++;
+	}
+	reasonglTouchDrag(touchPoints, (int)[touches count]);
 }
 
 - (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event
 {
 	[super touchesEnded:touches withEvent:event];
-	UITouch* touchEvent = [touches anyObject];
-	CGPoint locationInView = [touchEvent locationInView:self.view];
-	reasonglTouchRelease(locationInView.x, locationInView.y);
+	// UITouch* touchEvent = [touches anyObject];
+	// CGPoint locationInView = [touchEvent locationInView:self.view];
+	// reasonglTouchRelease(locationInView.x, locationInView.y);
+	double touchPoints[[touches count] * 3];
+	int i = 0;
+	for (UITouch* touchEvent in touches) {
+		CGPoint locationInView = [touchEvent locationInView:self.view];
+		touchPoints[i * 3 + 0] = [touchEvent hash];
+		touchPoints[i * 3 + 1] = locationInView.x;
+		touchPoints[i * 3 + 2] = locationInView.y;
+		i++;
+	}
+	reasonglTouchRelease(touchPoints, (int)[touches count]);
 }
 
 - (void)touchesCancelled:(NSSet *)touches withEvent:(UIEvent *)event
 {
 	[super touchesCancelled:touches withEvent:event];
+	double touchPoints[[touches count] * 3];
+	int i = 0;
+	for (UITouch* touchEvent in touches) {
+		CGPoint locationInView = [touchEvent locationInView:self.view];
+		touchPoints[i * 3 + 0] = [touchEvent hash];
+		touchPoints[i * 3 + 1] = locationInView.x;
+		touchPoints[i * 3 + 2] = locationInView.y;
+		i++;
+	}
+	reasonglTouchRelease(touchPoints, (int)[touches count]);
 }
 
 - (void)update {

@@ -117,14 +117,24 @@ CAMLprim value getWidth(value s) {
   CAMLparam1(s);
   id s2 = (id)(void *)Field(s, 0);
   ReprocessingViewController *game = (ReprocessingViewController *)s2;
-  CAMLreturn(Val_int(game.view.bounds.size.width));
+  CAMLreturn(Val_int(game.viewSize.width));
 }
 
 CAMLprim value getHeight(value s) {
   CAMLparam1(s);
   id s2 = (id)(void *)Field(s, 0);
   ReprocessingViewController *game = (ReprocessingViewController *)s2;
-  CAMLreturn(Val_int(game.view.bounds.size.height));
+  CAMLreturn(Val_int(game.viewSize.height));
+}
+
+void reasonglWindowResize() {
+  static dispatch_once_t onceToken;
+  static value *closure_f;
+  dispatch_once(&onceToken, ^{
+    closure_f = caml_named_value("reasonglWindowResize");
+  });
+
+  caml_callback(*closure_f, Val_int(0));
 }
 
 void reasonglMain(ReprocessingViewController *viewController) {
@@ -147,31 +157,115 @@ void reasonglUpdate(ReprocessingViewController *s) {
   caml_callback(*closure_f, caml_copy_double(s.timeSinceLastDraw));
 }
 
-void reasonglTouchPress(double x, double y) {
+void reasonglTouchPress(double* touchDoubles, int count) {
+  CAMLparam0();
+  CAMLlocal3(cli, cons, element);
+
+  int i;
+
+  cli = Val_emptylist;
+
+  for (i = count * 3 - 1; i >= 0; i-=3)
+  {
+      element = caml_alloc(3, 0);
+
+      double y =  touchDoubles[i];
+      double x =  touchDoubles[i - 1];
+      double id =  touchDoubles[i - 2];
+
+      Store_field(element, 0, caml_copy_double(id));
+      Store_field(element, 1, caml_copy_double(x));
+      Store_field(element, 2, caml_copy_double(y));
+
+      cons = caml_alloc(2, 0);
+      Store_field( cons, 0, element );  // head
+      Store_field( cons, 1, cli );              // tail
+
+      cli = cons;
+  }
+
   static dispatch_once_t onceToken;
   static value *closure_f;
   dispatch_once(&onceToken, ^{
     closure_f = caml_named_value("reasonglTouchPress");
   });
-  caml_callback2(*closure_f, caml_copy_double(x), caml_copy_double(y));
+  caml_callback(*closure_f, cli);
+
+  CAMLreturn0;
 }
 
-void reasonglTouchDrag(double x, double y) {
+void reasonglTouchDrag(double* touchDoubles, int count) {
+  CAMLparam0();
+  CAMLlocal3(cli, cons, element);
+
+  int i;
+
+  cli = Val_emptylist;
+
+  for (i = count * 3 - 1; i >= 0; i-=3)
+  {
+      element = caml_alloc(3, 0);
+
+      double y =  touchDoubles[i];
+      double x =  touchDoubles[i - 1];
+      double id =  touchDoubles[i - 2];
+
+      Store_field(element, 0, caml_copy_double(id));
+      Store_field(element, 1, caml_copy_double(x));
+      Store_field(element, 2, caml_copy_double(y));
+
+      cons = caml_alloc(2, 0);
+      Store_field( cons, 0, element );  // head
+      Store_field( cons, 1, cli );              // tail
+
+      cli = cons;
+  }
+
   static dispatch_once_t onceToken;
   static value *closure_f;
   dispatch_once(&onceToken, ^{
     closure_f = caml_named_value("reasonglTouchDrag");
   });
-  caml_callback2(*closure_f, caml_copy_double(x), caml_copy_double(y));
+  caml_callback(*closure_f, cli);
+
+  CAMLreturn0;
 }
 
-void reasonglTouchRelease(double x, double y) {
+void reasonglTouchRelease(double* touchDoubles, int count) {
+  CAMLparam0();
+  CAMLlocal3(cli, cons, element);
+
+  int i;
+
+  cli = Val_emptylist;
+
+  for (i = count * 3 - 1; i >= 0; i-=3)
+  {
+      element = caml_alloc(3, 0);
+
+      double y =  touchDoubles[i];
+      double x =  touchDoubles[i - 1];
+      double id =  touchDoubles[i - 2];
+
+      Store_field(element, 0, caml_copy_double(id));
+      Store_field(element, 1, caml_copy_double(x));
+      Store_field(element, 2, caml_copy_double(y));
+
+      cons = caml_alloc(2, 0);
+      Store_field( cons, 0, element );  // head
+      Store_field( cons, 1, cli );              // tail
+
+      cli = cons;
+  }
+
   static dispatch_once_t onceToken;
   static value *closure_f;
   dispatch_once(&onceToken, ^{
     closure_f = caml_named_value("reasonglTouchRelease");
   });
-  caml_callback2(*closure_f, caml_copy_double(x), caml_copy_double(y));
+  caml_callback(*closure_f, cli);
+
+  CAMLreturn0;
 }
 
 void Mat4_ortho_native(value out, value left, value right, value bottom, value top, value near, value far) {

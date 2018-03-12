@@ -90,6 +90,10 @@ let module Gl
   /* let getTimeMs = () => 0.; */
   let render = (~window, ~mouseDown=?, ~mouseUp=?, ~mouseMove=?, ~touchStart=?, ~touchMove=?, ~touchEnd=?, ~keyDown=?, ~keyUp=?, ~windowResize=?, ~backPressed=?, ~displayFunc, ()) => {
     Callback.register("reasonglUpdate", (time) => displayFunc(time *. 1000.));
+    Callback.register("reasonglWindowResize", switch windowResize {
+    | None => () => ()
+    | Some(fn) => fn
+    });
     /* | None => (x, y) => ()
     | Some(fn) => (x, y) => ignore(fn(~x=int_of_float(x), ~y=int_of_float(y)))
     }); */
