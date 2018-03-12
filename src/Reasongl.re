@@ -6,6 +6,7 @@ let module Gl
   include Tgls;
 
   let target = "native-ios";
+  let isTouchScreen = true;
   module File = {
     type t;
     let readFile = (~context, ~filename, ~cb) => {
@@ -87,20 +88,64 @@ let module Gl
   };
 
   /* let getTimeMs = () => 0.; */
-  let render = (~window, ~mouseDown=?, ~mouseUp=?, ~mouseMove=?, ~keyDown=?, ~keyUp=?, ~windowResize=?, ~backPressed=?, ~displayFunc, ()) => {
+  let render = (~window, ~mouseDown=?, ~mouseUp=?, ~mouseMove=?, ~touchStart=?, ~touchMove=?, ~touchEnd=?, ~keyDown=?, ~keyUp=?, ~windowResize=?, ~backPressed=?, ~displayFunc, ()) => {
     Callback.register("reasonglUpdate", (time) => displayFunc(time *. 1000.));
-    Callback.register("reasonglTouchDrag", switch mouseMove {
-    | None => (x, y) => ()
+    /* | None => (x, y) => ()
     | Some(fn) => (x, y) => ignore(fn(~x=int_of_float(x), ~y=int_of_float(y)))
-    });
-    Callback.register("reasonglTouchPress", switch mouseDown {
-    | None => (x, y) => ()
+    }); */
+    /* | None => (x, y) => ()
     | Some(fn) => (x, y) => ignore(fn(~button=Events.LeftButton, ~state=Events.MouseDown, ~x=int_of_float(x), ~y=int_of_float(y)))
-    });
-    Callback.register("reasonglTouchRelease", switch mouseUp {
-    | None => (x, y) => ()
+    }); */
+    /* | None => (x, y) => ()
     | Some(fn) => (x, y) => ignore(fn(~button=Events.LeftButton, ~state=Events.MouseUp, ~x=int_of_float(x), ~y=int_of_float(y)))
+    }); */
+
+    Callback.register("reasonglTouchDrag", switch mouseMove {
+    | None => switch touchMove {
+      | None => (touches) => ()
+      | Some(fn) => { touches => fn(~touches) }
+    }
+    | Some(fn) => (touches) => {
+      let (_, x, y) = List.hd(touches);
+      fn(~x=int_of_float(x), ~y=int_of_float(y));
+      switch touchMove {
+      | None => ()
+      | Some(fn) => fn(~touches)
+      };
+    }
     });
+
+    Callback.register("reasonglTouchPress", switch mouseDown {
+    | None => switch touchStart {
+      | None => (touches) => ()
+      | Some(fn) => { touches => fn(~touches) }
+    }
+    | Some(fn) => (touches) => {
+      /* Capi.logAndroid("TOUCH"); */
+      let (_, x, y) = List.hd(touches);
+      fn(~button=Events.LeftButton, ~state=Events.MouseDown, ~x=int_of_float(x), ~y=int_of_float(y));
+      switch touchStart {
+      | None => ()
+      | Some(fn) => fn(~touches)
+      };
+    }
+    });
+
+    Callback.register("reasonglTouchRelease", switch mouseUp {
+    | None => switch touchEnd {
+      | None => (touches) => ()
+      | Some(fn) => { touches => fn(~touches) }
+    }
+    | Some(fn) => (touches) => {
+      let (_, x, y) = List.hd(touches);
+      fn(~button=Events.LeftButton, ~state=Events.MouseUp, ~x=int_of_float(x), ~y=int_of_float(y));
+      switch touchEnd {
+      | None => ()
+      | Some(fn) => fn(~touches)
+      };
+    }
+    });
+
   };
 
   type shaderParamsT =
